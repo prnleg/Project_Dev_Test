@@ -1,9 +1,7 @@
 ﻿using MathNet.Numerics.LinearAlgebra;
-using MathNet.Numerics.LinearAlgebra.Double;
 using Microsoft.AspNetCore.Mvc;
-using NuGet.Protocol;
 using Project_Dev_Test.Core.Interfaces;
-using System.Net;
+using Project_Dev_Test.Web.Algorithm;
 
 namespace Project_Dev_Test.Web.Api
 {
@@ -18,8 +16,8 @@ namespace Project_Dev_Test.Web.Api
         }
 
         [HttpPost("TestCSVMatrix")]
-        //[VerifyImageExists]
-        public IActionResult CGNEImage(List<IFormFile> imagesCSV = null)
+        //[VerifyImageFile]
+        public IActionResult TestCSVMatrix(List<IFormFile> imagesCSV)
         {
             Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("en-US");
             List<double[]> list2D = new List<double[]>();
@@ -84,6 +82,53 @@ namespace Project_Dev_Test.Web.Api
             catch { }
 
             return Ok("Não foi possivel realizar o calculo");
+        }
+
+        [HttpPost("CGNRSolverImageSignal")]
+        [DisableRequestSizeLimit]
+        public async Task<IActionResult> CGNRImageSignal(List<IFormFile> imagesCSV)
+        {
+            Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("en-US");
+            List<double[]> matrixRead = new List<double[]>();
+            List<double> signalRead = new List<double>();
+
+            using (StreamReader reader = new StreamReader(imagesCSV[0].OpenReadStream()))
+            {
+                while (!reader.EndOfStream)
+                {
+                    var line = reader.ReadLine().Split(',');
+                    matrixRead.Add(Array.ConvertAll(line, Double.Parse));
+                }
+            }
+
+            double[,] matrixImage = new double[matrixRead.Count, matrixRead[0].Length];
+
+            if (matrixRead.Count > 1)
+                for (int i = 0; i < matrixRead.Count; i++)
+                    for (int j = 0; j < matrixRead[0].Length; j++)
+                        matrixImage[i, j] = matrixRead[i][j];
+            else
+                for (int i = 0; i < matrixRead[0].Length; i++)
+                    matrixImage[i, 0] = matrixRead[0][i];
+
+
+            using (StreamReader reader = new StreamReader(imagesCSV[1].OpenReadStream()))
+            {
+                while (!reader.EndOfStream)
+                {
+                    var line = reader.ReadLine();
+                    signalRead.Add(double.Parse(line));
+                }
+            }
+
+            double[] signalImage = new double[signalRead.Count];
+
+            for (int i = 0; i < matrixRead.Count; i++)
+                signalImage[i] = signalRead[i];
+
+            var result = CGNRSolver.Solve(matrixImage, signalImage);
+
+            return Ok(result);
         }
     }
 }

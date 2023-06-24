@@ -2,6 +2,7 @@
 using System;
 using System.Reflection;
 using Project_Dev_Test.Infrastructure;
+using Microsoft.AspNetCore.Http.Features;
 
 namespace Project_Dev_Test.Web
 {
@@ -17,6 +18,23 @@ namespace Project_Dev_Test.Web
             {
                 options.CheckConsentNeeded = context => true;
                 options.MinimumSameSitePolicy = SameSiteMode.None;
+            });
+
+            services.Configure<IISServerOptions>(options =>
+            {
+                options.MaxRequestBodySize = int.MaxValue;
+            });
+
+            services.Configure<FormOptions>(o =>
+            {
+                o.ValueLengthLimit = int.MaxValue;
+                o.MultipartBodyLengthLimit = int.MaxValue;
+                o.MultipartBoundaryLengthLimit = int.MaxValue;
+                o.MultipartHeadersCountLimit = int.MaxValue;
+                o.MultipartHeadersLengthLimit = int.MaxValue;
+                o.BufferBodyLengthLimit = int.MaxValue;
+                o.BufferBody = true;
+                o.ValueCountLimit = int.MaxValue;
             });
 
             services.AddDbContext();
@@ -63,5 +81,6 @@ namespace Project_Dev_Test.Web
                 endpoints.MapRazorPages();
             });
         }
+
     }
 }
