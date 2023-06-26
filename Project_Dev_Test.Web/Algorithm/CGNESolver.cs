@@ -1,8 +1,7 @@
 ﻿namespace Project_Dev_Test.Web.Algorithm
 {
-    public class CGNRSolver
+    public class CGNESolver
     {
-        // Métricas para desemepnho
         // Tolerância para a convergência
         // Número máximo de iterações
 

@@ -2,133 +2,55 @@
 using Microsoft.AspNetCore.Mvc;
 using Project_Dev_Test.Core.Interfaces;
 using Project_Dev_Test.Web.Algorithm;
+using Project_Dev_Test.Web.Readers;
+
+using System.Drawing.Imaging;
+using System.Drawing;
+using System;
+using MathNet.Numerics;
 
 namespace Project_Dev_Test.Web.Api
 {
 
-    public class CGNEController : Controller
+    public class CGNRController : Controller
     {
         private readonly IRepository _repository;
 
-        public CGNEController(IRepository repository)
+        public CGNRController(IRepository repository)
         {
             _repository = repository;
         }
 
-        [HttpPost("TestCSVMatrix")]
-        //[VerifyImageFile]
-        public IActionResult TestCSVMatrix(List<IFormFile> imagesCSV)
-        {
-            Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("en-US");
-            List<double[]> list2D = new List<double[]>();
-
-            using (StreamReader reader = new StreamReader(imagesCSV[0].OpenReadStream()))
-            {
-                while (!reader.EndOfStream)
-                {
-                    var line = reader.ReadLine().Split(';');
-                    list2D.Add(Array.ConvertAll(line, Double.Parse));
-                }
-            }
-
-            double[,] listA = new double[list2D[0].Length, list2D.Count];
-            
-            if (list2D.Count > 1)
-                for (int i = 0; i < list2D[0].Length; i++)
-                    for (int j = 0; j < list2D.Count; j++)
-                        listA[i, j] = list2D[i][j];
-            else
-                for (int i = 0; i < list2D[0].Length; i++)
-                    listA[i, 0] = list2D[0][i];
-
-            var A = Matrix<double>.Build.DenseOfArray(listA);
-            list2D = new List<double[]>();
-
-            using (StreamReader reader = new StreamReader(imagesCSV[1].OpenReadStream()))
-            {
-                while (!reader.EndOfStream)
-                {
-                    var line = reader.ReadLine().Split(';');
-                    list2D.Add(Array.ConvertAll(line, Double.Parse));
-                }
-            }
-
-            double[,] listB = new double[list2D[0].Length, list2D.Count];
-
-            if (list2D.Count > 1)
-                for (int i=0; i < list2D[0].Length; i++) 
-                    for (int j=0; j < list2D.Count; j++)
-                        listB[i,j] = list2D[i][j];
-            else
-                for (int i = 0;i < list2D[0].Length; i++)
-                    listB[i,0] = list2D[0][i];
-
-            var B = Matrix<double>.Build.DenseOfArray(listB);
-
-            try
-            {
-                var vectorResult = A * B;
-                return Ok(vectorResult);
-                
-            }
-
-            catch { }
-            
-            try {
-                var vectorResult = B * A;
-                return Ok(vectorResult);
-            }
-
-            catch { }
-
-            return Ok("Não foi possivel realizar o calculo");
-        }
-
-        [HttpPost("CGNRSolverImageSignal")]
+        [HttpPost("CGNR-SolverImageSignal")]
         [DisableRequestSizeLimit]
         public async Task<IActionResult> CGNRImageSignal(List<IFormFile> imagesCSV)
         {
             Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("en-US");
+
+            // Ler Matriz
             List<double[]> matrixRead = new List<double[]>();
+            matrixRead = CSVFileReader.CSVFileReaderListDouble(imagesCSV[0]);
+            double[,] matrixImage = CSVFileReader.toMatrix(matrixRead) ?? null;
+
+            Bitmap bitmap;
+            unsafe
+            {
+                fixed (double* intPtr = &matrixImage[0, 0])
+                {
+                    bitmap = new Bitmap(matrixImage.GetLength(0), matrixImage.GetLength(1), matrixImage.GetLength(0)*4, PixelFormat.Format32bppRgb, new IntPtr(intPtr)) ?? null;
+                    
+                    if(bitmap != null)
+                        return Ok(bitmap);
+                }
+            }
+
+            // Ler Sinal (vetor)
             List<double> signalRead = new List<double>();
+            signalRead = CSVFileReader.CSVFileReaderVector(imagesCSV[1]);
+            double[] signalImage = CSVFileReader.toVector(signalRead) ?? null;
 
-            using (StreamReader reader = new StreamReader(imagesCSV[0].OpenReadStream()))
-            {
-                while (!reader.EndOfStream)
-                {
-                    var line = reader.ReadLine().Split(',');
-                    matrixRead.Add(Array.ConvertAll(line, Double.Parse));
-                }
-            }
-
-            double[,] matrixImage = new double[matrixRead.Count, matrixRead[0].Length];
-
-            if (matrixRead.Count > 1)
-                for (int i = 0; i < matrixRead.Count; i++)
-                    for (int j = 0; j < matrixRead[0].Length; j++)
-                        matrixImage[i, j] = matrixRead[i][j];
-            else
-                for (int i = 0; i < matrixRead[0].Length; i++)
-                    matrixImage[i, 0] = matrixRead[0][i];
-
-
-            using (StreamReader reader = new StreamReader(imagesCSV[1].OpenReadStream()))
-            {
-                while (!reader.EndOfStream)
-                {
-                    var line = reader.ReadLine();
-                    signalRead.Add(double.Parse(line));
-                }
-            }
-
-            double[] signalImage = new double[signalRead.Count];
-
-            for (int i = 0; i < matrixRead.Count; i++)
-                signalImage[i] = signalRead[i];
-
-            var result = CGNRSolver.Solve(matrixImage, signalImage);
-
-            return Ok(result);
+            // resolução em CGNR
+            return Json(CGNRSolver.Solve(matrixImage, signalImage));
         }
     }
 }
