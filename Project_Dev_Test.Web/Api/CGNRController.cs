@@ -1,13 +1,9 @@
-﻿using MathNet.Numerics.LinearAlgebra;
 using Microsoft.AspNetCore.Mvc;
 using Project_Dev_Test.Core.Interfaces;
 using Project_Dev_Test.Web.Algorithm;
 using Project_Dev_Test.Web.Readers;
-
-using System.Drawing.Imaging;
 using System.Drawing;
-using System;
-using MathNet.Numerics;
+using System.Drawing.Imaging;
 
 namespace Project_Dev_Test.Web.Api
 {
@@ -37,10 +33,9 @@ namespace Project_Dev_Test.Web.Api
             {
                 fixed (double* intPtr = &matrixImage[0, 0])
                 {
-                    bitmap = new Bitmap(matrixImage.GetLength(0), matrixImage.GetLength(1), matrixImage.GetLength(0)*4, PixelFormat.Format32bppRgb, new IntPtr(intPtr)) ?? null;
-                    
-                    if(bitmap != null)
-                        return Ok(bitmap);
+                    ImageConverter converter = new ImageConverter();
+                    var imgReturn = (byte[])converter.ConvertTo(ToBitmap(matrixImage), typeof(byte[]));
+                    return File(imgReturn, "image/bmp");
                 }
             }
 
@@ -50,7 +45,64 @@ namespace Project_Dev_Test.Web.Api
             double[] signalImage = CSVFileReader.toVector(signalRead) ?? null;
 
             // resolução em CGNR
-            return Json(CGNRSolver.Solve(matrixImage, signalImage));
+
+        private unsafe Bitmap ToBitmap(double[,] rawImage)
+        {
+            int width = rawImage.GetLength(1);
+            int height = rawImage.GetLength(0);
+
+            Bitmap Image = new Bitmap(width, height);
+            BitmapData bitmapData = Image.LockBits(
+                new Rectangle(0, 0, width, height),
+                ImageLockMode.ReadWrite,
+                PixelFormat.Format32bppArgb
+            );
+            ColorARGB* startingPosition = (ColorARGB*)bitmapData.Scan0;
+
+            for (int i = 0; i < height; i++)
+                for (int j = 0; j < width; j++)
+                {
+                    double color = rawImage[i, j];
+                    byte rgb = (byte)(color * 255);
+
+                    ColorARGB* position = startingPosition + j + i * width;
+                    position->A = 255;
+                    position->R = rgb;
+                    position->G = rgb;
+                    position->B = rgb;
+                }
+
+            Image.UnlockBits(bitmapData);
+            return Image;
+        }
+
+        public struct ColorARGB
+        {
+            public byte B;
+            public byte G;
+            public byte R;
+            public byte A;
+
+            public ColorARGB(Color color)
+            {
+                A = color.A;
+                R = color.R;
+                G = color.G;
+                B = color.B;
+            }
+
+            public ColorARGB(byte a, byte r, byte g, byte b)
+            {
+                A = a;
+                R = r;
+                G = g;
+                B = b;
+            }
+
+            public Color ToColor()
+            {
+                return Color.FromArgb(A, R, G, B);
+            }
         }
     }
 }
