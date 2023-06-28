@@ -2,6 +2,8 @@
 {
     public class ResultObject
     {
+        public Guid Id { get; set; }
+
         public int User { get; set; }
         public string Image { get; set; }
 

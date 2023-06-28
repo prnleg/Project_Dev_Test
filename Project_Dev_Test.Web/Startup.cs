@@ -1,7 +1,6 @@
 ﻿using Microsoft.OpenApi.Models;
 using System;
 using System.Reflection;
-using Project_Dev_Test.Infrastructure;
 using Microsoft.AspNetCore.Http.Features;
 using Project_Dev_Test.Web.Service;
 
@@ -13,7 +12,7 @@ namespace Project_Dev_Test.Web
 
         public IConfiguration Configuration { get; }
 
-        public IServiceProvider ConfigureServices(IServiceCollection services)
+        public void ConfigureServices(IServiceCollection services)
         {
             services.Configure<CookiePolicyOptions>(options =>
             {
@@ -38,8 +37,6 @@ namespace Project_Dev_Test.Web
                 o.ValueCountLimit = int.MaxValue;
             });
 
-            services.AddDbContext();
-
             services.AddScoped<AlgorithmService>();
 
             services.AddControllersWithViews();
@@ -48,8 +45,6 @@ namespace Project_Dev_Test.Web
             services.AddRazorPages();
 
             services.AddSwaggerGen(c => c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" }));
-
-            return ContainerSetup.InitializeWeb(Assembly.GetExecutingAssembly(), services);
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

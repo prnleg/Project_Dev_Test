@@ -18,8 +18,4 @@
     <PackageReference Include="SQLite" Version="3.13.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Project_Dev_Test.Core\Project_Dev_Test.Core.csproj" />
-  </ItemGroup>
-
 </Project>

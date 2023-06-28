@@ -1,6 +1,5 @@
 ﻿using MathNet.Numerics.LinearAlgebra.Double;
 using Microsoft.AspNetCore.Mvc;
-using Project_Dev_Test.Core.Interfaces;
 using Project_Dev_Test.Web.Models;
 using Project_Dev_Test.Web.Readers;
 using Project_Dev_Test.Web.Service;
@@ -9,12 +8,10 @@ namespace Project_Dev_Test.Web.Api
 {
     public class CGNRController : Controller
     {
-        private readonly IRepository repository;
         private readonly AlgorithmService service;
 
-        public CGNRController(AlgorithmService service, IRepository repository)
+        public CGNRController(AlgorithmService service)
         {
-            this.repository = repository;
             this.service = service;
         }
 

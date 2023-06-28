@@ -8,7 +8,9 @@ namespace Project_Dev_Test.Web.Service
 {
     public class AlgorithmService
     {
-        public AlgorithmService() { }
+        public AlgorithmService()
+        {
+        }
 
         public ResultObject GetResult(Vector<double> g, AlgorithmEnum algorithm)
         {
@@ -62,6 +64,7 @@ namespace Project_Dev_Test.Web.Service
 
             ResultObject resultObject = new ResultObject()
             {
+                Id = Guid.NewGuid(),
                 Image = Convert.ToBase64String(imgReturn),
                 CPU = cpuUsage,
                 Memory = ramUsage,
