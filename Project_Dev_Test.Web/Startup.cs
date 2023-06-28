@@ -3,6 +3,7 @@ using System;
 using System.Reflection;
 using Project_Dev_Test.Infrastructure;
 using Microsoft.AspNetCore.Http.Features;
+using Project_Dev_Test.Web.Service;
 
 namespace Project_Dev_Test.Web
 {
@@ -38,6 +39,8 @@ namespace Project_Dev_Test.Web
             });
 
             services.AddDbContext();
+
+            services.AddScoped<AlgorithmService>();
 
             services.AddControllersWithViews();
             //.AddNewtonsoftJson();
