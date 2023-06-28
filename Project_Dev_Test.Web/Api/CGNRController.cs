@@ -1,7 +1,10 @@
+﻿using MathNet.Numerics;
+using MathNet.Numerics.LinearAlgebra.Double;
 using Microsoft.AspNetCore.Mvc;
 using Project_Dev_Test.Core.Interfaces;
 using Project_Dev_Test.Web.Algorithm;
 using Project_Dev_Test.Web.Readers;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 
@@ -19,32 +22,54 @@ namespace Project_Dev_Test.Web.Api
 
         [HttpPost("CGNR-SolverImageSignal")]
         [DisableRequestSizeLimit]
-        public async Task<IActionResult> CGNRImageSignal(List<IFormFile> imagesCSV)
+        public async Task<IActionResult> CGNRImageSignal()
         {
             Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("en-US");
 
-            // Ler Matriz
-            List<double[]> matrixRead = new List<double[]>();
-            matrixRead = CSVFileReader.CSVFileReaderListDouble(imagesCSV[0]);
-            double[,] matrixImage = CSVFileReader.toMatrix(matrixRead) ?? null;
+            MemoryStream mstream = new MemoryStream();
+            await HttpContext.Request.Body.CopyToAsync(mstream);
+
+            var formFile = new FormFile(mstream, 0, mstream.Length, "image-csv", "image-csv");
+
+            if (formFile == null)
+            {
+                throw new ArgumentNullException("Image CSV is null or empty");
+            }
+
+            var file = CSVFileReader.CSVFileReaderVector(formFile);
+            var fileVector = DenseVector.OfEnumerable(file);
+
+            var processedImage = CGNRSolver.Solve(fileVector).Item1;
+
+            if (processedImage.Count != 60 * 60)
+                throw new Exception("Processed image size != 60x60");
+
+            double[,] imageArray = new double[60, 60];
+
+            for (int i = 0; i < 60; i++)
+            {
+                for (int j = 0; j < 60; j++)
+                {
+                    imageArray[j, i] = processedImage[i * 60 + j];
+                }
+            }
+
+            byte[] imgReturn = null;
 
             Bitmap bitmap;
             unsafe
             {
-                fixed (double* intPtr = &matrixImage[0, 0])
+                fixed (double* intPtr = &imageArray[0, 0])
                 {
                     ImageConverter converter = new ImageConverter();
-                    var imgReturn = (byte[])converter.ConvertTo(ToBitmap(matrixImage), typeof(byte[]));
-                    return File(imgReturn, "image/bmp");
+                    imgReturn = converter.ConvertTo(ToBitmap(imageArray), typeof(byte[])) as byte[];
                 }
             }
 
-            // Ler Sinal (vetor)
-            List<double> signalRead = new List<double>();
-            signalRead = CSVFileReader.CSVFileReaderVector(imagesCSV[1]);
-            double[] signalImage = CSVFileReader.toVector(signalRead) ?? null;
+            var base64 = Convert.ToBase64String(imgReturn);
 
-            // resolução em CGNR
+            return File(imgReturn, "image/bmp");
+        }
 
         private unsafe Bitmap ToBitmap(double[,] rawImage)
         {

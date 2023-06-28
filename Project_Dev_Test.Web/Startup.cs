@@ -62,7 +62,8 @@ namespace Project_Dev_Test.Web
             }
             app.UseRouting();
 
-            app.UseHttpsRedirection();
+            Helpers.MatrixModel.Initialize();
+
             app.UseStaticFiles();
             app.UseCookiePolicy();
 

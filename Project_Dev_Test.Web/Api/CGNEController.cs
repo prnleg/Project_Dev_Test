@@ -33,9 +33,9 @@ namespace Project_Dev_Test.Web.Api
             double[] signalImage = CSVFileReader.toVector(signalRead);
 
             // resolução em CGNR
-            var result = CGNRSolver.Solve(matrixImage, signalImage);
+            //var result = CGNRSolver.Solve(matrixImage);
 
-            return Ok(result);
+            return Ok(/*result*/);
         }
     }
 }
