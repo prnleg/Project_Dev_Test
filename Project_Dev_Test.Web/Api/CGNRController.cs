@@ -6,7 +6,6 @@ using Project_Dev_Test.Web.Algorithm;
 using Project_Dev_Test.Web.Models;
 using Project_Dev_Test.Web.Readers;
 using System.Drawing;
-using System.Drawing.Imaging;
 
 namespace Project_Dev_Test.Web.Api
 {
