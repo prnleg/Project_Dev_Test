@@ -1,16 +1,15 @@
-﻿using MathNet.Numerics;
-using MathNet.Numerics.LinearAlgebra.Double;
+﻿using MathNet.Numerics.LinearAlgebra.Double;
 using Microsoft.AspNetCore.Mvc;
+using Project_Dev_Test.Core.Handlers;
 using Project_Dev_Test.Core.Interfaces;
 using Project_Dev_Test.Web.Algorithm;
+using Project_Dev_Test.Web.Models;
 using Project_Dev_Test.Web.Readers;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 
 namespace Project_Dev_Test.Web.Api
 {
-
     public class CGNRController : Controller
     {
         private readonly IRepository _repository;
@@ -20,11 +19,13 @@ namespace Project_Dev_Test.Web.Api
             _repository = repository;
         }
 
-        [HttpPost("CGNR-SolverImageSignal")]
+        [HttpPost("{userId}/CGNR-SolverImageSignal")]
         [DisableRequestSizeLimit]
-        public async Task<IActionResult> CGNRImageSignal()
+        public async Task<IActionResult> CGNRImageSignal([FromRoute] int userId)
         {
             Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("en-US");
+
+            ProcessingMetrics metrics = new ProcessingMetrics();
 
             MemoryStream mstream = new MemoryStream();
             await HttpContext.Request.Body.CopyToAsync(mstream);
@@ -39,7 +40,19 @@ namespace Project_Dev_Test.Web.Api
             var file = CSVFileReader.CSVFileReaderVector(formFile);
             var fileVector = DenseVector.OfEnumerable(file);
 
-            var processedImage = CGNRSolver.Solve(fileVector).Item1;
+            // Process image
+
+            var start = DateTime.Now;
+            metrics.StartProcessing();
+            
+            var processed = CGNRSolver.Solve(fileVector);
+
+            var end = DateTime.Now;
+            metrics.EndProcessing();
+
+
+            var processedImage = processed.result;
+            var iterations = processed.iterations;
 
             if (processedImage.Count != 60 * 60)
                 throw new Exception("Processed image size != 60x60");
@@ -62,72 +75,33 @@ namespace Project_Dev_Test.Web.Api
                 fixed (double* intPtr = &imageArray[0, 0])
                 {
                     ImageConverter converter = new ImageConverter();
-                    imgReturn = converter.ConvertTo(ToBitmap(imageArray), typeof(byte[])) as byte[];
+                    imgReturn = converter.ConvertTo(Helpers.ToBitmap(imageArray), typeof(byte[])) as byte[];
                 }
             }
 
-            var base64 = Convert.ToBase64String(imgReturn);
+            float cpuUsage = metrics.GetCpuUsage();
+            float ramUsage = metrics.GetRamUsageMB();
+            TimeSpan elapsedTime = metrics.GetElapsedTime();
 
-            return File(imgReturn, "image/bmp");
-        }
+            Console.WriteLine("CPU Usage: {0}%", cpuUsage);
+            Console.WriteLine("RAM Usage: {0} MB", ramUsage);
+            Console.WriteLine("Elapsed Time: {0}", elapsedTime);
 
-        private unsafe Bitmap ToBitmap(double[,] rawImage)
-        {
-            int width = rawImage.GetLength(1);
-            int height = rawImage.GetLength(0);
-
-            Bitmap Image = new Bitmap(width, height);
-            BitmapData bitmapData = Image.LockBits(
-                new Rectangle(0, 0, width, height),
-                ImageLockMode.ReadWrite,
-                PixelFormat.Format32bppArgb
-            );
-            ColorARGB* startingPosition = (ColorARGB*)bitmapData.Scan0;
-
-            for (int i = 0; i < height; i++)
-                for (int j = 0; j < width; j++)
-                {
-                    double color = rawImage[i, j];
-                    byte rgb = (byte)(color * 255);
-
-                    ColorARGB* position = startingPosition + j + i * width;
-                    position->A = 255;
-                    position->R = rgb;
-                    position->G = rgb;
-                    position->B = rgb;
-                }
-
-            Image.UnlockBits(bitmapData);
-            return Image;
-        }
-
-        public struct ColorARGB
-        {
-            public byte B;
-            public byte G;
-            public byte R;
-            public byte A;
-
-            public ColorARGB(Color color)
+            ResultObject resultObject = new ResultObject()
             {
-                A = color.A;
-                R = color.R;
-                G = color.G;
-                B = color.B;
-            }
+                User = userId,
+                Image = Convert.ToBase64String(imgReturn),
+                CPU = cpuUsage,
+                Memory = ramUsage,
+                Iterations = iterations,
+                TimeElapsed = elapsedTime.TotalMilliseconds,
+                StartOperation = start,
+                EndOperation = end
+            };
 
-            public ColorARGB(byte a, byte r, byte g, byte b)
-            {
-                A = a;
-                R = r;
-                G = g;
-                B = b;
-            }
+            //return File(imgReturn, "image/bmp");
 
-            public Color ToColor()
-            {
-                return Color.FromArgb(A, R, G, B);
-            }
+            return Ok(resultObject);
         }
     }
 }
