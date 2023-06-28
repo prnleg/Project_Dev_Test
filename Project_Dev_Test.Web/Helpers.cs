@@ -4,6 +4,7 @@ using Project_Dev_Test.Web.Readers;
 using System.Drawing.Imaging;
 using System.Drawing;
 using Project_Dev_Test.Web.Models;
+using System.Reflection;
 
 namespace Project_Dev_Test.Web
 {
@@ -21,15 +22,17 @@ namespace Project_Dev_Test.Web
 
             public static void Initialize()
             {
-                var a = Directory.GetCurrentDirectory();
-                if (!File.Exists("./H-1.csv") || !File.Exists("./H-2.csv"))
+                var wkdir = Environment.CurrentDirectory;
+                var file1Dir = Path.Join(wkdir, "H-1.csv");
+                var file2Dir = Path.Join(wkdir, "H-2.csv");
+                if (!File.Exists(file1Dir) || !File.Exists(file2Dir))
                 {
                     throw new FileNotFoundException("H file not found under execution path");
                 }
 
                 if (H1 == null)
                 {
-                    var hFile = File.OpenRead("./H-1.csv");
+                    var hFile = File.OpenRead(file1Dir);
                     var formFile = new FormFile(hFile, 0, hFile.Length, "H-1.csv", "H-1.csv");
 
                     var hMatrix = CSVFileReader.CSVFileReaderListDouble(formFile);
@@ -45,7 +48,7 @@ namespace Project_Dev_Test.Web
 
                 if (H2 == null)
                 {
-                    var hFile = File.OpenRead("./H-2.csv");
+                    var hFile = File.OpenRead(file2Dir);
                     var formFile = new FormFile(hFile, 0, hFile.Length, "H-2.csv", "H-2.csv");
 
                     var hMatrix = CSVFileReader.CSVFileReaderListDouble(formFile);
