@@ -8,10 +8,7 @@ namespace Project_Dev_Test.Web.Service
 {
     public class AlgorithmService
     {
-        public AlgorithmService()
-        {
-
-        }
+        public AlgorithmService() { }
 
         public ResultObject GetResult(Vector<double> g, AlgorithmEnum algorithm)
         {
@@ -21,11 +18,11 @@ namespace Project_Dev_Test.Web.Service
             var start = DateTime.Now;
             metrics.StartProcessing();
 
-            var processed = CGNESolver.Solve(g);
+            (Vector<double> result, uint iterations) processed =
+                    algorithm == AlgorithmEnum.CGNE ? CGNESolver.Solve(g) : CGNRSolver.Solve(g);
 
             var end = DateTime.Now;
             metrics.EndProcessing();
-
 
             var processedImage = processed.result;
             var iterations = processed.iterations;
