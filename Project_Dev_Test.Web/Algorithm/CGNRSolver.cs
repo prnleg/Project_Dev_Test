@@ -7,8 +7,8 @@ namespace Project_Dev_Test.Web.Algorithm
         public static (Vector<double> result, uint iterations) Solve(Vector<double> g)
         {
             uint i;
-            Matrix<double> H = Helpers.MatrixModel.H;
-            Matrix<double> Ht = Helpers.MatrixModel.Ht;
+            Matrix<double> H = Helpers.MatrixModel.H1;
+            Matrix<double> Ht = Helpers.MatrixModel.H1t;
             Vector<double> f = Vector<double>.Build.Dense(H.ColumnCount, 0.0);
             Vector<double> r = g - H * f;
             Vector<double> z = Ht * r;

@@ -11,20 +11,23 @@ namespace Project_Dev_Test.Web
     {
         public static class MatrixModel
         {
-            public static Matrix<double> H = null;
-            public static Matrix<double> Ht = null;
+            public static Matrix<double> H1 = null;
+            public static Matrix<double> H1t = null;
+
+            public static Matrix<double> H2 = null;
+            public static Matrix<double> H2t = null;
 
             static MatrixModel() { }
 
             public static void Initialize()
             {
                 var a = Directory.GetCurrentDirectory();
-                if (!File.Exists("./H-1.csv"))
+                if (!File.Exists("./H-1.csv") || !File.Exists("./H-2.csv"))
                 {
-                    throw new FileNotFoundException("H-1.csv file not found under execution path");
+                    throw new FileNotFoundException("H file not found under execution path");
                 }
 
-                if (H == null)
+                if (H1 == null)
                 {
                     var hFile = File.OpenRead("./H-1.csv");
                     var formFile = new FormFile(hFile, 0, hFile.Length, "H-1.csv", "H-1.csv");
@@ -32,12 +35,28 @@ namespace Project_Dev_Test.Web
                     var hMatrix = CSVFileReader.CSVFileReaderListDouble(formFile);
                     var hMatrixProc = CSVFileReader.toMatrix(hMatrix);
 
-                    H = ConvertToMatrix(hMatrixProc);
+                    H1 = ConvertToMatrix(hMatrixProc);
                 }
 
-                if (Ht == null)
+                if (H1t == null)
                 {
-                    Ht = H.Transpose();
+                    H1t = H1.Transpose();
+                }
+
+                if (H2 == null)
+                {
+                    var hFile = File.OpenRead("./H-2.csv");
+                    var formFile = new FormFile(hFile, 0, hFile.Length, "H-2.csv", "H-2.csv");
+
+                    var hMatrix = CSVFileReader.CSVFileReaderListDouble(formFile);
+                    var hMatrixProc = CSVFileReader.toMatrix(hMatrix);
+
+                    H2 = ConvertToMatrix(hMatrixProc);
+                }
+
+                if (H2t == null)
+                {
+                    H2t = H2.Transpose();
                 }
             }
 
