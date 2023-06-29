@@ -1,4 +1,5 @@
 ﻿using MathNet.Numerics.LinearAlgebra;
+using MathNet.Numerics.Providers.LinearAlgebra;
 
 namespace Project_Dev_Test.Web.Algorithm
 {
@@ -18,24 +19,32 @@ namespace Project_Dev_Test.Web.Algorithm
             double bestError = double.MaxValue;
             double rOldNorm = r.L2Norm();
 
+            double zNorm, rNorm;
+            Vector<double> w;
+            double alpha;
+            double error;
+
             for (i = 0; i < 300; i++)
             {
-                Vector<double> w = H * p;
-                double zNorm = Math.Pow(z.L2Norm(), 2);
-                double alpha = zNorm / Math.Pow(w.L2Norm(), 2);
-                f = f + alpha * p;
-                r = r - alpha * w;
-                double error = Math.Abs(r.L2Norm() - rOldNorm);
+                w = H * p;
+                zNorm = Math.Pow(z.L2Norm(), 2);
+                alpha = zNorm / Math.Pow(w.L2Norm(), 2);
+                f += alpha * p;
+                r -= alpha * w;
+
+                rNorm = r.L2Norm();
+                error = Math.Abs(rNorm - rOldNorm);
+
                 if (error < bestError)
                 {
                     bestError = error;
                     outVector = f;
                 }
                 if (error < 1e-8) break;
+
                 z = Ht * r;
-                double beta = Math.Pow(z.L2Norm(), 2) / zNorm;
-                p = z + beta * p;
-                rOldNorm = r.L2Norm();
+                p = z + (Math.Pow(z.L2Norm(), 2) / zNorm) * p;
+                rOldNorm = rNorm;
             }
 
             if (i >= 300)
