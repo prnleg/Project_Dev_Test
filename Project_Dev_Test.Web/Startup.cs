@@ -3,6 +3,7 @@ using System;
 using System.Reflection;
 using Microsoft.AspNetCore.Http.Features;
 using Project_Dev_Test.Web.Service;
+using Project_Dev_Test.Web.Repository;
 
 namespace Project_Dev_Test.Web
 {
@@ -37,6 +38,7 @@ namespace Project_Dev_Test.Web
                 o.ValueCountLimit = int.MaxValue;
             });
 
+            services.AddScoped<DataRepository>();
             services.AddScoped<AlgorithmService>();
 
             services.AddControllersWithViews();
@@ -60,6 +62,7 @@ namespace Project_Dev_Test.Web
             }
             app.UseRouting();
 
+            DataRepository.InitializeDatabase();
             Helpers.MatrixModel.Initialize();
 
             app.UseStaticFiles();

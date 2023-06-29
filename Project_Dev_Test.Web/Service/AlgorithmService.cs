@@ -2,14 +2,18 @@
 using Project_Dev_Test.Core.Handlers;
 using Project_Dev_Test.Web.Algorithm;
 using Project_Dev_Test.Web.Models;
+using Project_Dev_Test.Web.Repository;
 using System.Drawing;
 
 namespace Project_Dev_Test.Web.Service
 {
     public class AlgorithmService
     {
-        public AlgorithmService()
+        private readonly DataRepository repository;
+
+        public AlgorithmService(DataRepository repository)
         {
+            this.repository = repository;
         }
 
         public ResultObject GetResult(Vector<double> g, AlgorithmEnum algorithm)
@@ -75,6 +79,20 @@ namespace Project_Dev_Test.Web.Service
             };
 
             return resultObject;
+        }
+
+        public void SaveResult(ResultObject result, int userId)
+        {
+            result.User = userId;
+
+            try
+            {
+                repository.SaveResult(result);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("AlgorithmService - Error saving Result Object: " + ex.ToString());
+            }
         }
 
     }

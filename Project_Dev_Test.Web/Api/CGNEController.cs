@@ -35,6 +35,7 @@ namespace Project_Dev_Test.Web.Api
             var fileVector = DenseVector.OfEnumerable(file);
 
             var resultObject = service.GetResult(fileVector, AlgorithmEnum.CGNE);
+            service.SaveResult(resultObject, userId);
 
             resultObject.User = userId;
 
