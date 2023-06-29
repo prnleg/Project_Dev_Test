@@ -34,7 +34,7 @@ namespace Project_Dev_Test.Web.Api
             var file = CSVFileReader.CSVFileReaderVector(formFile);
             var fileVector = DenseVector.OfEnumerable(file);
 
-            var resultObject = service.GetResult(fileVector, AlgorithmEnum.CGNR);
+            var resultObject = await service.GetResult(fileVector, AlgorithmEnum.CGNR);
             service.SaveResult(resultObject, userId);
 
             resultObject.User = userId;

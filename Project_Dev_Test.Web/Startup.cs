@@ -38,6 +38,7 @@ namespace Project_Dev_Test.Web
                 o.ValueCountLimit = int.MaxValue;
             });
 
+            services.AddSingleton<ProcessQueueService>();
             services.AddScoped<DataRepository>();
             services.AddScoped<AlgorithmService>();
 

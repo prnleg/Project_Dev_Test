@@ -10,13 +10,15 @@ namespace Project_Dev_Test.Web.Service
     public class AlgorithmService
     {
         private readonly DataRepository repository;
+        private readonly ProcessQueueService processQueue;
 
-        public AlgorithmService(DataRepository repository)
+        public AlgorithmService(DataRepository repository, ProcessQueueService processQueue)
         {
             this.repository = repository;
+            this.processQueue = processQueue;
         }
 
-        public ResultObject GetResult(Vector<double> g, AlgorithmEnum algorithm)
+        public async Task<ResultObject> GetResult(Vector<double> g, AlgorithmEnum algorithm)
         {
             ProcessingMetrics metrics = new ProcessingMetrics();
 
@@ -24,14 +26,25 @@ namespace Project_Dev_Test.Web.Service
             var start = DateTime.Now;
             metrics.StartProcessing();
 
-            (Vector<double> result, uint iterations) processed =
-                    algorithm == AlgorithmEnum.CGNE ? CGNESolver.Solve(g) : CGNRSolver.Solve(g);
+            var task = new Task<(Vector<double> result, uint iterations)>(() =>
+            {
+                return algorithm == AlgorithmEnum.CGNE ? CGNESolver.Solve(g) : CGNRSolver.Solve(g);
+            });
+
+            await processQueue.Enqueue(task);
+
+            // Get results
+            Vector<double> processedImage = null;
+            uint iterations = 0;
+
+            await task.ContinueWith((task) =>
+            {
+                processedImage = task.Result.result;
+                iterations = task.Result.iterations;
+            });
 
             var end = DateTime.Now;
             metrics.EndProcessing();
-
-            var processedImage = processed.result;
-            var iterations = processed.iterations;
 
             if (processedImage.Count != 60 * 60)
                 throw new Exception("Processed image size != 60x60");
