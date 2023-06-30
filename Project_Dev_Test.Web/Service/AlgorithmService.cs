@@ -21,6 +21,7 @@ namespace Project_Dev_Test.Web.Service
         public async Task<ResultObject> GetResult(Vector<double> g, AlgorithmEnum algorithm)
         {
             ProcessingMetrics metrics = new ProcessingMetrics();
+            int gSize = g.Count() == 50816 ? 60 : 30;
 
             // Process image
             var start = DateTime.Now;
@@ -28,7 +29,7 @@ namespace Project_Dev_Test.Web.Service
 
             var task = new Task<(Vector<double> result, uint iterations)>(() =>
             {
-                return algorithm == AlgorithmEnum.CGNE ? CGNESolver.Solve(g) : CGNRSolver.Solve(g);
+                return algorithm == AlgorithmEnum.CGNE ? CGNESolver.Solve(g, gSize) : CGNRSolver.Solve(g, gSize);
             });
 
             await processQueue.Enqueue(task);
@@ -46,16 +47,16 @@ namespace Project_Dev_Test.Web.Service
             var end = DateTime.Now;
             metrics.EndProcessing();
 
-            if (processedImage.Count != 60 * 60)
+            if (processedImage.Count != gSize * gSize)
                 throw new Exception("Processed image size != 60x60");
 
-            double[,] imageArray = new double[60, 60];
+            double[,] imageArray = new double[gSize, gSize];
 
-            for (int i = 0; i < 60; i++)
+            for (int i = 0; i < gSize; i++)
             {
-                for (int j = 0; j < 60; j++)
+                for (int j = 0; j < gSize; j++)
                 {
-                    imageArray[j, i] = processedImage[i * 60 + j];
+                    imageArray[j, i] = processedImage[i * gSize + j];
                 }
             }
 

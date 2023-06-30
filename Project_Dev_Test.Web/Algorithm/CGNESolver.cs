@@ -2,13 +2,13 @@
 
 namespace Project_Dev_Test.Web.Algorithm
 {
-    public class CGNESolver
+    public class CGNESolver : AlgorithmBase
     {
-        public static (Vector<double> result, uint iterations) Solve(Vector<double> g)
+        public static (Vector<double> result, uint iterations) Solve(Vector<double> g, int gSize)
         {
             uint i;
-            Matrix<double> H = Helpers.MatrixModel.H1;
-            Matrix<double> Ht = Helpers.MatrixModel.H1t;
+            Matrix<double> H = gSize == 60 ? Helpers.MatrixModel.H1 : Helpers.MatrixModel.H2;
+            Matrix<double> Ht = gSize == 60 ? Helpers.MatrixModel.H1t : Helpers.MatrixModel.H2t;
             Vector<double> f = Vector<double>.Build.Dense(H.ColumnCount, 0.0);
             Vector<double> r = g - H * f;
             Vector<double> p = Ht * r;
@@ -21,7 +21,7 @@ namespace Project_Dev_Test.Web.Algorithm
             double alpha, beta;
             double rNorm, error;
 
-            for (i = 0; i < 300; i++)
+            for (i = 0; i < MAX_ITERATIONS; i++)
             {
                 alphaNum = r.DotProduct(r);
                 alpha = alphaNum / p.DotProduct(p);
@@ -36,7 +36,7 @@ namespace Project_Dev_Test.Web.Algorithm
                     bestError = error;
                     output = f;
                 }
-                if (error < 1e-8)
+                if (error < TARGET_ERROR)
                     break;
 
                 beta = r.DotProduct(r) / alphaNum;
@@ -45,9 +45,9 @@ namespace Project_Dev_Test.Web.Algorithm
                 rOldNorm = rNorm;
             }
 
-            if (i >= 300)
+            if (i >= MAX_ITERATIONS)
             {
-                i = 300 - 1;
+                i = MAX_ITERATIONS - 1;
             }
 
             return (output, i + 1);

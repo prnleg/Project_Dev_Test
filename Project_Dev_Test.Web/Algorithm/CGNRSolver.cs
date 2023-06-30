@@ -1,15 +1,14 @@
 ﻿using MathNet.Numerics.LinearAlgebra;
-using MathNet.Numerics.Providers.LinearAlgebra;
 
 namespace Project_Dev_Test.Web.Algorithm
 {
-    public class CGNRSolver
+    public class CGNRSolver : AlgorithmBase
     {
-        public static (Vector<double> result, uint iterations) Solve(Vector<double> g)
+        public static (Vector<double> result, uint iterations) Solve(Vector<double> g, int gSize)
         {
             uint i;
-            Matrix<double> H = Helpers.MatrixModel.H1;
-            Matrix<double> Ht = Helpers.MatrixModel.H1t;
+            Matrix<double> H = gSize == 60 ? Helpers.MatrixModel.H1 : Helpers.MatrixModel.H2;
+            Matrix<double> Ht = gSize == 60 ? Helpers.MatrixModel.H1t : Helpers.MatrixModel.H2t;
             Vector<double> f = Vector<double>.Build.Dense(H.ColumnCount, 0.0);
             Vector<double> r = g - H * f;
             Vector<double> z = Ht * r;
@@ -24,7 +23,7 @@ namespace Project_Dev_Test.Web.Algorithm
             double alpha;
             double error;
 
-            for (i = 0; i < 300; i++)
+            for (i = 0; i < MAX_ITERATIONS; i++)
             {
                 w = H * p;
                 zNorm = Math.Pow(z.L2Norm(), 2);
@@ -40,16 +39,16 @@ namespace Project_Dev_Test.Web.Algorithm
                     bestError = error;
                     outVector = f;
                 }
-                if (error < 1e-8) break;
+                if (error < TARGET_ERROR) break;
 
                 z = Ht * r;
                 p = z + (Math.Pow(z.L2Norm(), 2) / zNorm) * p;
                 rOldNorm = rNorm;
             }
 
-            if (i >= 300)
+            if (i >= MAX_ITERATIONS)
             {
-                i = 300 - 1;
+                i = MAX_ITERATIONS - 1;
             }
 
             return (outVector, i + 1);
